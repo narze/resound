@@ -1,15 +1,17 @@
 <script lang="ts">
   import type { Audio } from "./lib/doc"
-  import { sharedAudios } from './lib/doc';
+  import { sharedAudios, playQueues } from './lib/doc';
+  import Sound from "./lib/sound.svelte"
 
   function addNewAudio() {
-    const name = `audio-${~~(Math.random() * 100)}`
+    const name = `${~~(Math.random() * 11)}`
 
     sharedAudios.push([{name}]);
   }
 
   function clearAudio() {
     sharedAudios.delete(0, sharedAudios.length)
+    playQueues.delete(0, playQueues.length)
   }
 
   let audioArray: Audio[] = []
@@ -17,7 +19,6 @@
   sharedAudios.observe(() => {
     audioArray = Array.from(sharedAudios)
   })
-
 </script>
 
 <main>
@@ -25,7 +26,7 @@
 
   <ul>
     {#each audioArray as audio }
-      <li>{audio.name}</li>
+      <li>{audio.name} <Sound label={audio.name} filename={audio.name} /></li>
     {/each}
   </ul>
 

@@ -1,10 +1,11 @@
-import * as Y from "yjs";
-import { WebrtcProvider } from "y-webrtc";
+import * as Y from "yjs"
+import { WebrtcProvider } from "y-webrtc"
 
 export type Audio = {
-  name: string;
-};
+  name: string
+}
 
-const ydoc = new Y.Doc();
-new WebrtcProvider("remote-soundboard-test", ydoc);
-export const sharedAudios = ydoc.getArray<Audio>("audios");
+const ydoc = new Y.Doc()
+new WebrtcProvider("remote-soundboard-test", ydoc)
+export const sharedAudios = ydoc.getArray<Audio>("audios")
+export const playQueues = ydoc.getArray<string>("play_queues")
