@@ -48,15 +48,7 @@
     <a href="https://thailand-grand-opening.web.app" target="_blank" rel="noreferrer">ลุงจะใช้เวลาเท่าไหร่ในการเปิดประเทศ?</a>
   </footer>
 
-  <script src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"></script>
-  <script>
-    kofiWidgetOverlay.draw("narze", {
-      type: "floating-chat",
-      "floating-chat.donateButton.text": "สนับสนุน ฿",
-      "floating-chat.donateButton.background-color": "#f45d22",
-      "floating-chat.donateButton.text-color": "#fff",
-    });
-  </script>
+
 </main>
 
 <style>
