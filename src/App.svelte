@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Audio } from "./lib/doc"
   import { sharedAudios, playQueues } from './lib/doc';
-  import Sound from "./lib/sound.svelte"
+  import Sound from "./lib/Sound.svelte"
 
   function addNewAudio() {
     const name = `${~~(Math.random() * 11)}`
