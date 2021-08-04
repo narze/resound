@@ -19,11 +19,31 @@
   sharedAudios.observe(() => {
     audioArray = Array.from(sharedAudios)
   })
+
+
+  function uploadAudio(e: any) {
+    let input = e.target as HTMLInputElement
+
+    if(input.files[0].type.indexOf('audio/') !== 0){
+      alert('Please upload audio file');
+      return;
+    }
+    const reader = new FileReader();
+
+    reader.onload = function(){
+      const str = this.result as string;
+      // this is a string, so you can store it in localStorage, even if it's really not a good idea
+      console.log(str);
+      const aud = new Audio(str);
+      aud.play();
+    };
+
+    reader.readAsDataURL(input.files[0]);
+  }
 </script>
 
 <main>
   <h1>Remote Soundboard</h1>
-  
 
   <ul class="sound">
     {#each audioArray as audio }
@@ -34,21 +54,13 @@
   <button on:click={addNewAudio}>Add New Audio</button>
   <button on:click={clearAudio}>Remove all audios</button>
 
+  <div>
+    <input type="file" id="audio" on:change={uploadAudio} />Upload Audio
+  </div>
+
   <footer>
     <a href="https://github.com/narze/remote-soundboard" target="_blank" rel="noreferrer">Github</a>
-    |
-    <a href="https://twitter.com/narze" target="_blank" rel="noneferrer">@narze</a>
-    |
-    <a href="https://watasalim.vercel.app" target="_blank" rel="noreferrer">วาทะสลิ่มสุดเจ๋ง</a>
-    |
-    <a href="https://tid-vs-truad.vercel.app" target="_blank" rel="noreferrer">ติด vs ตรวจ</a>
-    |
-    <a href="https://9speech.vercel.app" target="_blank" rel="noreferrer">9speech</a>
-    |
-    <a href="https://thailand-grand-opening.web.app" target="_blank" rel="noreferrer">ลุงจะใช้เวลาเท่าไหร่ในการเปิดประเทศ?</a>
   </footer>
-
-
 </main>
 
 <style>
@@ -105,5 +117,5 @@
     }
   }
 
-  
+
 </style>
