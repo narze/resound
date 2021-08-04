@@ -1,4 +1,6 @@
 <script lang="ts">
+  import localForage from "localforage";
+
   import type { Audio } from "./lib/doc"
   import { sharedAudios, playQueues } from './lib/doc';
   import Sound from "./lib/Sound.svelte"
@@ -20,7 +22,6 @@
     audioArray = Array.from(sharedAudios)
   })
 
-
   function uploadAudio(e: any) {
     let input = e.target as HTMLInputElement
 
@@ -30,21 +31,37 @@
     }
     const reader = new FileReader();
 
-    reader.onload = function(){
-      const str = this.result as string;
-      // this is a string, so you can store it in localStorage, even if it's really not a good idea
-      console.log(str);
-      const aud = new Audio(str);
-      aud.play();
+    reader.onload = async function () {
+      const audioString = this.result as string;
+
+      const ids = (await localForage.getItem("ids")) as Array<number> || []
+      const id = ids.length ? ids[ids.length - 1] + 1 : 0
+      ids.push(id)
+
+      try {
+        await localForage.setItem(`${id}`, audioString);
+        await localForage.setItem("ids", ids);
+
+        audioUploadIds = ids
+      } catch (err) {
+        alert(err.message);
+      }
     };
 
     reader.readAsDataURL(input.files[0]);
   }
+
+  let audioUploadIds: Array<number> = []
+
+  localForage.getItem("ids").then(ids => {
+    audioUploadIds = ids as Array<number> || []
+  })
 </script>
 
 <main>
   <h1>Remote Soundboard</h1>
 
+  {JSON.stringify(audioUploadIds)}
   <ul class="sound">
     {#each audioArray as audio }
       <li>{audio.name} <Sound label={audio.name} filename={audio.name} /></li>

@@ -19,6 +19,7 @@
     "vite": "^2.4.4"
   },
   "dependencies": {
+    "localforage": "^1.9.0",
     "y-webrtc": "^10.2.0",
     "yjs": "^13.5.12"
   }
