@@ -5,15 +5,16 @@
   import { sharedAudios, playQueues } from './lib/doc';
   import Sound from "./lib/Sound.svelte"
 
-  function addNewAudio() {
-    const name = `${~~(Math.random() * 11)}`
-
-    sharedAudios.push([{name}]);
+  type AudioRecord = {
+    id: number,
+    name: string,
   }
 
   function clearAudio() {
-    sharedAudios.delete(0, sharedAudios.length)
-    playQueues.delete(0, playQueues.length)
+    // sharedAudios.delete(0, sharedAudios.length)
+    // playQueues.delete(0, playQueues.length)
+    localForage.clear()
+    audioUploadIds = []
   }
 
   let audioArray: Audio[] = []
@@ -23,57 +24,71 @@
   })
 
   function uploadAudio(e: any) {
-    let input = e.target as HTMLInputElement
+    const input = e.target as HTMLInputElement
+    const file = input.files[0]
+    const name = file.name.split(".").slice(0, -1).join(".")
 
-    if(input.files[0].type.indexOf('audio/') !== 0){
+    if (file.type.indexOf('audio/') !== 0) {
       alert('Please upload audio file');
       return;
     }
+
     const reader = new FileReader();
 
     reader.onload = async function () {
       const audioString = this.result as string;
 
-      const ids = (await localForage.getItem("ids")) as Array<number> || []
-      const id = ids.length ? ids[ids.length - 1] + 1 : 0
-      ids.push(id)
+      const audioRecords = (await localForage.getItem("ids")) as Array<AudioRecord> || []
+      const id = audioRecords.length ? audioRecords[audioRecords.length - 1].id + 1 : 0
+      audioRecords.push({ id, name})
 
       try {
         await localForage.setItem(`${id}`, audioString);
-        await localForage.setItem("ids", ids);
+        await localForage.setItem("ids", audioRecords);
 
-        audioUploadIds = ids
+        audioUploadIds = audioRecords
+
+        input.value = ""
       } catch (err) {
         alert(err.message);
       }
     };
 
-    reader.readAsDataURL(input.files[0]);
+    reader.readAsDataURL(file);
   }
 
-  let audioUploadIds: Array<number> = []
+  async function deleteAudioId(audioId) {
+    const audioRecords = (await localForage.getItem("ids")) as Array<AudioRecord> || []
+    const updatedIds = audioRecords.filter(({id}) => id !== audioId)
+    await localForage.setItem("ids", updatedIds);
+
+    await localForage.removeItem(`${audioId}`);
+
+    audioUploadIds = updatedIds
+  }
+
+  let audioUploadIds: Array<AudioRecord> = []
 
   localForage.getItem("ids").then(ids => {
-    audioUploadIds = ids as Array<number> || []
+    audioUploadIds = ids as Array<AudioRecord> || []
   })
 </script>
 
 <main>
   <h1>Remote Soundboard</h1>
 
-  {JSON.stringify(audioUploadIds)}
-  <ul class="sound">
-    {#each audioArray as audio }
-      <li>{audio.name} <Sound label={audio.name} filename={audio.name} /></li>
-    {/each}
-  </ul>
+  {#each audioUploadIds as { id, name } }
+    <div class="sound-wrapper">
+      <Sound label={name} audioId={id} /> <button on:click={() => deleteAudioId(id)}>Delete</button>
+    </div>
+  {/each}
 
-  <button on:click={addNewAudio}>Add New Audio</button>
-  <button on:click={clearAudio}>Remove all audios</button>
-
-  <div>
-    <input type="file" id="audio" on:change={uploadAudio} />Upload Audio
+  <div class="file-wrapper">
+    <h3>Upload Audio</h3>
+    <input type="file" id="audio" on:change={uploadAudio} />
   </div>
+
+  <button on:click={clearAudio}>Remove all audios</button>
 
   <footer>
     <a href="https://github.com/narze/remote-soundboard" target="_blank" rel="noreferrer">Github</a>
@@ -92,11 +107,6 @@
     margin: 0 auto;
   }
 
-  img {
-    height: 16rem;
-    width: 16rem;
-  }
-
   h1 {
     color: #ff3e00;
     text-transform: uppercase;
@@ -112,18 +122,34 @@
     margin: 1rem auto;
     line-height: 1.35;
   }
-  button{
+
+  :global(button) {
     background-color: #ff3e00; /* Green */
-  border: none;
-  color: white;
-  padding: 15px 32px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
   }
-  footer{color:black;position:fixed;right:10px;bottom:10px;font-size:1rem}
-  a{color: black;text-decoration: none;}
+
+  footer {
+    color:black;position:fixed;right:10px;bottom:10px;font-size:1rem
+  }
+
+  a {
+    color: black;text-decoration: none;
+  }
+
+  .sound-wrapper {
+    margin: 0.5rem auto;
+  }
+
+  .file-wrapper {
+    margin: 2rem auto;
+  }
+
   @media (min-width: 480px) {
     h1 {
       max-width: none;
@@ -133,6 +159,4 @@
       max-width: none;
     }
   }
-
-
 </style>
