@@ -1,9 +1,9 @@
 <script lang="ts">
   import localForage from "localforage"
-  import { playQueues } from "./doc"
 
   export let label
   export let audioId
+  export let playQueues
 
   const play = async () => {
     const audioData = (await localForage.getItem(`${audioId}`)) as string
@@ -12,15 +12,11 @@
     audio.play()
   }
 
-  // const addToQueue = (filename: string) => {
-  //   playQueues.push([filename])
-  // }
-
   let queueArray: number[] = []
 
   playQueues.observe(() => {
     queueArray = Array.from(playQueues)
-    console.log({ queueArray })
+
     if (!queueArray.length) {
       return
     }

@@ -1,13 +1,26 @@
 <script lang="ts">
   import localForage from "localforage"
+  import { WebrtcProvider } from "y-webrtc"
+  import * as Y from "yjs"
 
   import type { AudioRecord } from "./lib/doc"
-  import { sharedAudios, playQueues } from "./lib/doc"
   import Sound from "./lib/Sound.svelte"
 
+  let sharedAudios: Y.Array<AudioRecord>
+  let playQueues: Y.Array<AudioRecord["id"]>
+  let audioArray: AudioRecord[] = []
+  let roomNumber: string
+  let provider: WebrtcProvider
+
   function clearAudio() {
-    sharedAudios.delete(0, sharedAudios.length)
-    playQueues.delete(0, playQueues.length)
+    if (sharedAudios) {
+      sharedAudios.delete(0, sharedAudios.length)
+    }
+
+    if (playQueues) {
+      playQueues.delete(0, playQueues.length)
+    }
+
     localForage.clear()
     audioUploadIds = []
   }
@@ -64,6 +77,29 @@
     audioUploadIds = updatedIds
   }
 
+  function changeRoomNumber(e: any) {
+    const input = e.target as HTMLInputElement
+    roomNumber = input.value
+
+    const ydoc = new Y.Doc()
+    if (provider) {
+      provider.disconnect()
+      provider.destroy()
+    }
+    provider = new WebrtcProvider(`resound-room-${roomNumber}`, ydoc)
+
+    sharedAudios = ydoc.getArray<AudioRecord>("audios")
+    playQueues = ydoc.getArray<AudioRecord["id"]>("play_queues")
+
+    sharedAudios.observe(() => {
+      audioArray = Array.from(sharedAudios)
+    })
+
+    audioArray = Array.from(sharedAudios)
+
+    alert(`Joined room : ${roomNumber}`)
+  }
+
   function playRemotely(id: number) {
     playQueues.push([id])
   }
@@ -73,46 +109,43 @@
   localForage.getItem("ids").then((ids) => {
     audioUploadIds = (ids as Array<AudioRecord>) || []
   })
-
-  let audioArray: AudioRecord[] = []
-
-  sharedAudios.observe(() => {
-    audioArray = Array.from(sharedAudios)
-  })
-
-  audioArray = Array.from(sharedAudios)
 </script>
 
 <main>
   <h1>Remote Soundboard</h1>
 
-  <h3>Play on this browser</h3>
-  {audioUploadIds.length == 0 ? "No audio" : ""}
+  <h3>Room Number</h3>
+  <input type="text" on:change={changeRoomNumber} />
 
-  {#each audioUploadIds as { id, name }}
-    <div class="sound-wrapper">
-      <Sound label={name} audioId={id} />
-      <button on:click={() => deleteAudioId(id)}>Delete</button>
+  {#if roomNumber}
+    <h3>Play on this browser</h3>
+    {audioUploadIds.length == 0 ? "No audio" : ""}
+
+    {#each audioUploadIds as { id, name }}
+      <div class="sound-wrapper">
+        <Sound label={name} audioId={id} {playQueues} />
+        <button on:click={() => deleteAudioId(id)}>Delete</button>
+      </div>
+    {/each}
+
+    <hr />
+
+    <h3>Play remotely</h3>
+    {audioArray.length == 0 ? "No audio" : ""}
+
+    {#each audioArray as { id, name }}
+      <div class="sound-wrapper">
+        <button on:click={() => playRemotely(id)}>{name}</button>
+      </div>
+    {/each}
+
+    <div class="file-wrapper">
+      <h3>Upload Audio</h3>
+      <input type="file" id="audio" on:change={uploadAudio} />
     </div>
-  {/each}
 
-  <hr />
-
-  <h3>Play remotely</h3>
-  {audioArray.length == 0 ? "No audio" : ""}
-
-  {#each audioArray as { id, name }}
-    <div class="sound-wrapper">
-      <button on:click={() => playRemotely(id)}>{name}</button>
-    </div>
-  {/each}
-
-  <div class="file-wrapper">
-    <h3>Upload Audio</h3>
-    <input type="file" id="audio" on:change={uploadAudio} />
-  </div>
-
-  <button on:click={clearAudio}>Remove all audios</button>
+    <button on:click={clearAudio}>Remove all audios</button>
+  {/if}
 
   <footer>
     <a
@@ -143,12 +176,6 @@
     line-height: 1.1;
     margin: 2rem auto;
     max-width: 14rem;
-  }
-
-  p {
-    max-width: 14rem;
-    margin: 1rem auto;
-    line-height: 1.35;
   }
 
   :global(button) {
@@ -185,10 +212,6 @@
 
   @media (min-width: 480px) {
     h1 {
-      max-width: none;
-    }
-
-    p {
       max-width: none;
     }
   }
