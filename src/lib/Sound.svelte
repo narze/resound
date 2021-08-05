@@ -1,6 +1,6 @@
 <script lang="ts">
   import localForage from "localforage"
-  import {playQueues} from "./doc"
+  import { playQueues } from "./doc"
 
   export let label
   export let audioId
@@ -8,24 +8,28 @@
   const play = async () => {
     const audioData = (await localForage.getItem(`${audioId}`)) as string
 
-    const audio = new Audio(audioData);
-    audio.play();
+    const audio = new Audio(audioData)
+    audio.play()
   }
 
   // const addToQueue = (filename: string) => {
   //   playQueues.push([filename])
   // }
 
-  // let queueArray: string[] = []
+  let queueArray: number[] = []
 
-  // playQueues.observe(() => {
-  //   queueArray = Array.from(playQueues)
+  playQueues.observe(() => {
+    queueArray = Array.from(playQueues)
+    console.log({ queueArray })
+    if (!queueArray.length) {
+      return
+    }
 
-  //   if (queueArray[0] == filename) {
-  //     play()
-  //     playQueues.delete(0)
-  //   }
-  // })
+    if (queueArray[0] == audioId) {
+      play()
+      playQueues.delete(0)
+    }
+  })
 </script>
 
 <button

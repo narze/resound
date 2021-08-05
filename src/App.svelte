@@ -1,85 +1,109 @@
 <script lang="ts">
-  import localForage from "localforage";
+  import localForage from "localforage"
 
-  import type { Audio } from "./lib/doc"
-  import { sharedAudios, playQueues } from './lib/doc';
+  import type { AudioRecord } from "./lib/doc"
+  import { sharedAudios, playQueues } from "./lib/doc"
   import Sound from "./lib/Sound.svelte"
 
-  type AudioRecord = {
-    id: number,
-    name: string,
-  }
-
   function clearAudio() {
-    // sharedAudios.delete(0, sharedAudios.length)
-    // playQueues.delete(0, playQueues.length)
+    sharedAudios.delete(0, sharedAudios.length)
+    playQueues.delete(0, playQueues.length)
     localForage.clear()
     audioUploadIds = []
   }
-
-  let audioArray: Audio[] = []
-
-  sharedAudios.observe(() => {
-    audioArray = Array.from(sharedAudios)
-  })
 
   function uploadAudio(e: any) {
     const input = e.target as HTMLInputElement
     const file = input.files[0]
     const name = file.name.split(".").slice(0, -1).join(".")
 
-    if (file.type.indexOf('audio/') !== 0) {
-      alert('Please upload audio file');
-      return;
+    if (file.type.indexOf("audio/") !== 0) {
+      alert("Please upload audio file")
+      return
     }
 
-    const reader = new FileReader();
+    const reader = new FileReader()
 
     reader.onload = async function () {
-      const audioString = this.result as string;
+      const audioString = this.result as string
 
-      const audioRecords = (await localForage.getItem("ids")) as Array<AudioRecord> || []
-      const id = audioRecords.length ? audioRecords[audioRecords.length - 1].id + 1 : 0
-      audioRecords.push({ id, name})
+      const audioRecords =
+        ((await localForage.getItem("ids")) as Array<AudioRecord>) || []
+      const id = audioRecords.length
+        ? audioRecords[audioRecords.length - 1].id + 1
+        : 0
+      audioRecords.push({ id, name })
 
       try {
-        await localForage.setItem(`${id}`, audioString);
-        await localForage.setItem("ids", audioRecords);
+        await localForage.setItem(`${id}`, audioString)
+        await localForage.setItem("ids", audioRecords)
 
         audioUploadIds = audioRecords
 
+        // Clear all and push new audio records
+        sharedAudios.delete(0, sharedAudios.length)
+        sharedAudios.push(audioRecords)
+
         input.value = ""
       } catch (err) {
-        alert(err.message);
+        alert(err.message)
       }
-    };
+    }
 
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(file)
   }
 
   async function deleteAudioId(audioId) {
-    const audioRecords = (await localForage.getItem("ids")) as Array<AudioRecord> || []
-    const updatedIds = audioRecords.filter(({id}) => id !== audioId)
-    await localForage.setItem("ids", updatedIds);
+    const audioRecords =
+      ((await localForage.getItem("ids")) as Array<AudioRecord>) || []
+    const updatedIds = audioRecords.filter(({ id }) => id !== audioId)
+    await localForage.setItem("ids", updatedIds)
 
-    await localForage.removeItem(`${audioId}`);
+    await localForage.removeItem(`${audioId}`)
 
     audioUploadIds = updatedIds
   }
 
-  let audioUploadIds: Array<AudioRecord> = []
+  function playRemotely(id: number) {
+    playQueues.push([id])
+  }
 
-  localForage.getItem("ids").then(ids => {
-    audioUploadIds = ids as Array<AudioRecord> || []
+  let audioUploadIds: AudioRecord[] = []
+
+  localForage.getItem("ids").then((ids) => {
+    audioUploadIds = (ids as Array<AudioRecord>) || []
   })
+
+  let audioArray: AudioRecord[] = []
+
+  sharedAudios.observe(() => {
+    audioArray = Array.from(sharedAudios)
+  })
+
+  audioArray = Array.from(sharedAudios)
 </script>
 
 <main>
   <h1>Remote Soundboard</h1>
 
-  {#each audioUploadIds as { id, name } }
+  <h3>Play on this browser</h3>
+  {audioUploadIds.length == 0 ? "No audio" : ""}
+
+  {#each audioUploadIds as { id, name }}
     <div class="sound-wrapper">
-      <Sound label={name} audioId={id} /> <button on:click={() => deleteAudioId(id)}>Delete</button>
+      <Sound label={name} audioId={id} />
+      <button on:click={() => deleteAudioId(id)}>Delete</button>
+    </div>
+  {/each}
+
+  <hr />
+
+  <h3>Play remotely</h3>
+  {audioArray.length == 0 ? "No audio" : ""}
+
+  {#each audioArray as { id, name }}
+    <div class="sound-wrapper">
+      <button on:click={() => playRemotely(id)}>{name}</button>
     </div>
   {/each}
 
@@ -91,14 +115,18 @@
   <button on:click={clearAudio}>Remove all audios</button>
 
   <footer>
-    <a href="https://github.com/narze/remote-soundboard" target="_blank" rel="noreferrer">Github</a>
+    <a
+      href="https://github.com/narze/remote-soundboard"
+      target="_blank"
+      rel="noreferrer">Github</a
+    >
   </footer>
 </main>
 
 <style>
   :root {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   }
 
   main {
@@ -135,11 +163,16 @@
   }
 
   footer {
-    color:black;position:fixed;right:10px;bottom:10px;font-size:1rem
+    color: black;
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    font-size: 1rem;
   }
 
   a {
-    color: black;text-decoration: none;
+    color: black;
+    text-decoration: none;
   }
 
   .sound-wrapper {
