@@ -102,7 +102,8 @@
     if (isServer) {
       const audioRecords =
         ((await localForage.getItem("ids")) as Array<AudioRecord>) || []
-      // Clear all and push new audio records
+
+      // FIXME: Replace all shared audios with the one in IndexedDB
       sharedAudios.delete(0, sharedAudios.length)
       sharedAudios.push(audioRecords)
     }
@@ -120,7 +121,9 @@
 </script>
 
 <main>
-  <h1>Resound</h1>
+  {#if isServer || !roomNumber}
+    <h1>Resound</h1>
+  {/if}
 
   {#if roomNumber}
     <h2 class="text-2xl">Room {roomNumber}</h2>
@@ -130,6 +133,7 @@
       type="text"
       class="border p-2"
       placeholder="Enter Room Number"
+      value="1234"
     />
 
     <button
@@ -143,28 +147,32 @@
   {/if}
 
   {#if roomNumber}
-    {isServer ? "Server" : "Client"}
-    {audioUploadIds.length == 0 ? "No audio" : ""}
-
     {#if isServer}
-      {#each audioUploadIds as { id, name }}
-        <div class="my-2">
-          <Sound label={name} audioId={id} {playQueues} />
-          <button
-            on:click={() => deleteAudioId(id)}
-            class="border rounded p-2 bg-red-400">Delete</button
-          >
-        </div>
-      {/each}
+      {audioUploadIds.length == 0 ? "No audio" : ""}
+      <div class="grid grid-cols-5 gap-1">
+        {#each audioUploadIds as { id, name }}
+          <div class="relative h-40">
+            <Sound label={name} audioId={id} {playQueues} />
+            <button
+              on:click={() => deleteAudioId(id)}
+              class="absolute top-1 right-1 border">ⓧ</button
+            >
+          </div>
+        {/each}
+      </div>
     {:else}
-      {#each audioArray as { id, name }}
-        <div class="my-2">
-          <button
-            on:click={() => playRemotely(id)}
-            class="border rounded p-2 bg-green-400">{name}</button
-          >
-        </div>
-      {/each}
+      {audioArray.length == 0 ? "No audio" : ""}
+      <div class="grid grid-cols-5 gap-1">
+        {#each audioArray as { id, name }}
+          <div class="relative h-40">
+            <button
+              on:click={() => playRemotely(id)}
+              class="text-xl h-full w-full bg-yellow-200 hover:bg-yellow-500 active:bg-yellow-700 rounded"
+              >{name}</button
+            >
+          </div>
+        {/each}
+      </div>
     {/if}
 
     {#if isServer}

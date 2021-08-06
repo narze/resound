@@ -38,7 +38,7 @@
 </script>
 
 <button
-  class="text-xl text-center px-4 py-2 rounded bg-green-500 mx-2"
+  class="text-xl h-full w-full bg-yellow-200 hover:bg-yellow-500 active:bg-yellow-700 rounded"
   on:click={() => play()}
 >
   {label}
