@@ -5,10 +5,19 @@
   export let audioId
   export let playQueues
 
-  const play = async () => {
-    const audioData = (await localForage.getItem(`${audioId}`)) as string
+  let audioData: string
+  let audio: HTMLAudioElement
 
-    const audio = new Audio(audioData)
+  const play = async () => {
+    if (!audioData) {
+      audioData = (await localForage.getItem(`${audioId}`)) as string
+      audio = new Audio(audioData)
+    }
+
+    if (!audio.paused) {
+      audio.currentTime = 0
+    }
+
     audio.play()
   }
 
