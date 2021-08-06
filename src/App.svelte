@@ -2,8 +2,8 @@
   import localForage from "localforage"
   import { WebrtcProvider } from "y-webrtc"
   import * as Y from "yjs"
+  import "twind/shim"
 
-  import type { AudioRecord } from "./lib/doc"
   import Sound from "./lib/Sound.svelte"
 
   let sharedAudios: Y.Array<AudioRecord>
@@ -77,8 +77,14 @@
     audioUploadIds = updatedIds
   }
 
-  function changeRoomNumber(e: any) {
-    const input = e.target as HTMLInputElement
+  function handleEnter(e: KeyboardEvent) {
+    if (e.key == "Enter") {
+      changeRoomNumber()
+    }
+  }
+
+  function changeRoomNumber() {
+    const input = document.getElementById("room-number") as HTMLInputElement
     roomNumber = input.value
 
     const ydoc = new Y.Doc()
@@ -96,8 +102,6 @@
     })
 
     audioArray = Array.from(sharedAudios)
-
-    alert(`Joined room : ${roomNumber}`)
   }
 
   function playRemotely(id: number) {
@@ -112,10 +116,22 @@
 </script>
 
 <main>
-  <h1>Remote Soundboard</h1>
+  <h1>Resound</h1>
 
-  <h3>Room Number</h3>
-  <input type="text" on:change={changeRoomNumber} />
+  {#if roomNumber}
+    <h2 class="text-2xl">Room {roomNumber}</h2>
+  {:else}
+    <input
+      id="room-number"
+      type="text"
+      class="border p-2"
+      on:keydown={handleEnter}
+      placeholder="Enter Room Number"
+    />
+    <button on:click={changeRoomNumber} class="border rounded p-2 bg-red-500"
+      >Enter</button
+    >
+  {/if}
 
   {#if roomNumber}
     <h3>Play on this browser</h3>
