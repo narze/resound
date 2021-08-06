@@ -11,6 +11,7 @@
   let audioArray: AudioRecord[] = []
   let roomNumber: string
   let provider: WebrtcProvider
+  let isServer: boolean
 
   function clearAudio() {
     if (sharedAudios) {
@@ -77,13 +78,8 @@
     audioUploadIds = updatedIds
   }
 
-  function handleEnter(e: KeyboardEvent) {
-    if (e.key == "Enter") {
-      changeRoomNumber()
-    }
-  }
-
-  function changeRoomNumber() {
+  function enterRoomNumber(server: boolean) {
+    isServer = server
     const input = document.getElementById("room-number") as HTMLInputElement
     roomNumber = input.value
 
@@ -125,42 +121,54 @@
       id="room-number"
       type="text"
       class="border p-2"
-      on:keydown={handleEnter}
       placeholder="Enter Room Number"
     />
-    <button on:click={changeRoomNumber} class="border rounded p-2 bg-red-500"
-      >Enter</button
+
+    <button
+      on:click={() => enterRoomNumber(true)}
+      class="border rounded p-2 bg-red-500">Create Room</button
+    >
+    <button
+      on:click={() => enterRoomNumber(false)}
+      class="border rounded p-2 bg-red-500">Join Room</button
     >
   {/if}
 
   {#if roomNumber}
-    <h3>Play on this browser</h3>
+    {isServer ? "Server" : "Client"}
     {audioUploadIds.length == 0 ? "No audio" : ""}
 
-    {#each audioUploadIds as { id, name }}
-      <div class="sound-wrapper">
-        <Sound label={name} audioId={id} {playQueues} />
-        <button on:click={() => deleteAudioId(id)}>Delete</button>
+    {#if isServer}
+      {#each audioUploadIds as { id, name }}
+        <div class="my-2">
+          <Sound label={name} audioId={id} {playQueues} />
+          <button
+            on:click={() => deleteAudioId(id)}
+            class="border rounded p-2 bg-red-400">Delete</button
+          >
+        </div>
+      {/each}
+    {:else}
+      {#each audioArray as { id, name }}
+        <div class="my-2">
+          <button
+            on:click={() => playRemotely(id)}
+            class="border rounded p-2 bg-green-400">{name}</button
+          >
+        </div>
+      {/each}
+    {/if}
+
+    {#if isServer}
+      <div class="file-wrapper">
+        <h3>Upload Audio</h3>
+        <input type="file" id="audio" on:change={uploadAudio} />
       </div>
-    {/each}
 
-    <hr />
-
-    <h3>Play remotely</h3>
-    {audioArray.length == 0 ? "No audio" : ""}
-
-    {#each audioArray as { id, name }}
-      <div class="sound-wrapper">
-        <button on:click={() => playRemotely(id)}>{name}</button>
-      </div>
-    {/each}
-
-    <div class="file-wrapper">
-      <h3>Upload Audio</h3>
-      <input type="file" id="audio" on:change={uploadAudio} />
-    </div>
-
-    <button on:click={clearAudio}>Remove all audios</button>
+      <button on:click={clearAudio} class="border rounded p-2 bg-red-400"
+        >Remove all audios</button
+      >
+    {/if}
   {/if}
 
   <footer>
@@ -216,10 +224,6 @@
   a {
     color: black;
     text-decoration: none;
-  }
-
-  .sound-wrapper {
-    margin: 0.5rem auto;
   }
 
   .file-wrapper {
