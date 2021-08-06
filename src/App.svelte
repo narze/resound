@@ -78,7 +78,7 @@
     audioUploadIds = updatedIds
   }
 
-  function enterRoomNumber(server: boolean) {
+  async function enterRoomNumber(server: boolean) {
     isServer = server
     const input = document.getElementById("room-number") as HTMLInputElement
     roomNumber = input.value
@@ -98,6 +98,14 @@
     })
 
     audioArray = Array.from(sharedAudios)
+
+    if (isServer) {
+      const audioRecords =
+        ((await localForage.getItem("ids")) as Array<AudioRecord>) || []
+      // Clear all and push new audio records
+      sharedAudios.delete(0, sharedAudios.length)
+      sharedAudios.push(audioRecords)
+    }
   }
 
   function playRemotely(id: number) {
