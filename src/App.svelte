@@ -1,6 +1,7 @@
 <script lang="ts">
   import localForage from "localforage"
   import { WebrtcProvider } from "y-webrtc"
+  import { IndexeddbPersistence } from "y-indexeddb"
   import * as Y from "yjs"
   import "twind/shim"
 
@@ -76,6 +77,10 @@
     await localForage.removeItem(`${audioId}`)
 
     audioUploadIds = updatedIds
+
+    // Clear all and push new audio records
+    sharedAudios.delete(0, sharedAudios.length)
+    sharedAudios.push(updatedIds)
   }
 
   async function enterRoomNumber(server: boolean) {
@@ -88,6 +93,23 @@
       provider.disconnect()
       provider.destroy()
     }
+
+    if (isServer) {
+      const indexeddbProvider = new IndexeddbPersistence(
+        `resound-room-${roomNumber}`,
+        ydoc
+      )
+
+      indexeddbProvider.whenSynced.then(async () => {
+        const audioRecords =
+          ((await localForage.getItem("ids")) as Array<AudioRecord>) || []
+
+        // Replace all shared audios with the one in IndexedDB
+        sharedAudios.delete(0, sharedAudios.length)
+        sharedAudios.push(audioRecords)
+      })
+    }
+
     provider = new WebrtcProvider(`resound-room-${roomNumber}`, ydoc)
 
     sharedAudios = ydoc.getArray<AudioRecord>("audios")
@@ -99,14 +121,9 @@
 
     audioArray = Array.from(sharedAudios)
 
-    if (isServer) {
-      const audioRecords =
-        ((await localForage.getItem("ids")) as Array<AudioRecord>) || []
-
-      // FIXME: Replace all shared audios with the one in IndexedDB
-      sharedAudios.delete(0, sharedAudios.length)
-      sharedAudios.push(audioRecords)
-    }
+    provider.on("peers", (e) => {
+      console.log("peers", { e })
+    })
   }
 
   function playRemotely(id: number) {
