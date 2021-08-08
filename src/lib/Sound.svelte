@@ -14,11 +14,12 @@
       audio = new Audio(audioData)
     }
 
-    if (!audio.paused) {
+    if (audio.paused) {
+      audio.play()
+    } else {
+      audio.pause()
       audio.currentTime = 0
     }
-
-    audio.play()
   }
 
   let queueArray: number[] = []
