@@ -7,6 +7,8 @@
 
   import Sound from "./lib/Sound.svelte"
 
+  const audioCache: Array<HTMLAudioElement> = []
+
   let sharedAudios: Y.Array<AudioRecord>
   let playQueues: Y.Array<AudioRecord["id"]>
   let audioArray: AudioRecord[] = []
@@ -130,6 +132,18 @@
     playQueues.push([id])
   }
 
+  function onPlay(playingAudio: HTMLAudioElement) {
+    audioCache.forEach((audio, idx) => {
+      if (audio != playingAudio) {
+        audio.pause()
+        audio.currentTime = 0
+        delete audioCache[idx]
+      }
+    })
+
+    audioCache.push(playingAudio)
+  }
+
   let audioUploadIds: AudioRecord[] = []
 
   localForage.getItem("ids").then((ids) => {
@@ -169,7 +183,7 @@
       <div class="grid grid-cols-5 gap-1">
         {#each audioUploadIds as { id, name }}
           <div class="relative h-40">
-            <Sound label={name} audioId={id} {playQueues} />
+            <Sound label={name} audioId={id} {onPlay} {playQueues} />
             <button
               on:click={() => deleteAudioId(id)}
               class="absolute top-1 right-1 border">ⓧ</button

@@ -4,6 +4,7 @@
   export let label
   export let audioId
   export let playQueues
+  export let onPlay: (audio: HTMLAudioElement) => void
 
   let audioData: string
   let audio: HTMLAudioElement
@@ -16,6 +17,7 @@
 
     if (audio.paused) {
       audio.play()
+      onPlay(audio)
     } else {
       audio.pause()
       audio.currentTime = 0
