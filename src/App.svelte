@@ -11,7 +11,8 @@
 
   let sharedAudios: Y.Array<AudioRecord>
   let playQueues: Y.Array<AudioRecord["id"]>
-  let audioArray: AudioRecord[] = []
+  let playingAudio: Y.Array<AudioRecord["id"]>
+  let audioArray: Array<AudioRecord & { isPlaying?: boolean }> = []
   let roomNumber: string
   let provider: WebrtcProvider
   let isServer: boolean
@@ -116,9 +117,21 @@
 
     sharedAudios = ydoc.getArray<AudioRecord>("audios")
     playQueues = ydoc.getArray<AudioRecord["id"]>("play_queues")
+    playingAudio = ydoc.getArray<AudioRecord["id"]>("playing")
 
     sharedAudios.observe(() => {
       audioArray = Array.from(sharedAudios)
+    })
+
+    playingAudio.observe(() => {
+      const playingAudioArray = Array.from(playingAudio)
+
+      audioArray = Array.from(sharedAudios).map((sharedAudio) => {
+        return {
+          ...sharedAudio,
+          isPlaying: playingAudioArray.includes(sharedAudio.id),
+        }
+      })
     })
 
     audioArray = Array.from(sharedAudios)
@@ -183,7 +196,13 @@
       <div class="grid grid-cols-5 gap-1">
         {#each audioUploadIds as { id, name }}
           <div class="relative h-40">
-            <Sound label={name} audioId={id} {onPlay} {playQueues} />
+            <Sound
+              label={name}
+              audioId={id}
+              {onPlay}
+              {playQueues}
+              {playingAudio}
+            />
             <button
               on:click={() => deleteAudioId(id)}
               class="absolute top-1 right-1 border">ⓧ</button
@@ -194,11 +213,13 @@
     {:else}
       {audioArray.length == 0 ? "No audio" : ""}
       <div class="grid grid-cols-5 gap-1">
-        {#each audioArray as { id, name }}
+        {#each audioArray as { id, name, isPlaying }}
           <div class="relative h-40">
             <button
               on:click={() => playRemotely(id)}
-              class="text-xl h-full w-full bg-yellow-200 hover:bg-yellow-500 active:bg-yellow-700 rounded"
+              class="text-xl h-full w-full rounded {isPlaying
+                ? 'bg-green-400 hover:bg-green-500 active:bg-green-700'
+                : 'bg-yellow-200 hover:bg-yellow-500 active:bg-yellow-700'}"
               >{name}</button
             >
           </div>

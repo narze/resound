@@ -1,9 +1,11 @@
 <script lang="ts">
   import localForage from "localforage"
+  import * as Y from "yjs"
 
   export let label
   export let audioId
-  export let playQueues
+  export let playQueues: Y.Array<AudioRecord["id"]>
+  export let playingAudio: Y.Array<AudioRecord["id"]>
   export let onPlay: (audio: HTMLAudioElement) => void
 
   let audioData: string
@@ -19,7 +21,9 @@
     if (audio.paused) {
       audio.onpause = () => {
         isPlaying = false
+        playingAudio.delete(0, 1)
       }
+      playingAudio.push([audioId])
       audio.play()
       onPlay(audio)
     } else {
