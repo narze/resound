@@ -8,6 +8,7 @@
 
   let audioData: string
   let audio: HTMLAudioElement
+  let isPlaying: boolean = false
 
   const play = async () => {
     if (!audioData) {
@@ -16,6 +17,9 @@
     }
 
     if (audio.paused) {
+      audio.onpause = () => {
+        isPlaying = false
+      }
       audio.play()
       onPlay(audio)
     } else {
@@ -38,11 +42,13 @@
       playQueues.delete(0)
     }
   })
+
+  $: isPlaying = audio && !audio.paused
+  $: colors = isPlaying
+    ? "bg-green-400 hover:bg-green-500 active:bg-green-700"
+    : "bg-yellow-200 hover:bg-yellow-500 active:bg-yellow-700"
 </script>
 
-<button
-  class="text-xl h-full w-full bg-yellow-200 hover:bg-yellow-500 active:bg-yellow-700 rounded"
-  on:click={() => play()}
->
+<button class="text-xl h-full w-full rounded {colors}" on:click={() => play()}>
   {label}
 </button>
