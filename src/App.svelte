@@ -6,6 +6,7 @@
   import "twind/shim"
 
   import Sound from "./lib/Sound.svelte"
+  import Counter from "./lib/Counter.svelte"
 
   const audioCache: Array<HTMLAudioElement> = []
 
@@ -165,6 +166,8 @@
 </script>
 
 <main>
+  <!-- <Counter count={1} /> -->
+
   {#if isServer || !roomNumber}
     <h1>Resound</h1>
   {/if}
