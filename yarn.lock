@@ -2755,6 +2755,11 @@ svelte-hmr@^0.14.7:
   resolved "https://registry.yarnpkg.com/svelte-hmr/-/svelte-hmr-0.14.7.tgz#7fa8261c7b225d9409f0a86f3b9ea5c3ca6f6607"
   integrity sha512-pDrzgcWSoMaK6AJkBWkmgIsecW0GChxYZSZieIYfCP0v2oPyx2CYU/zm7TBIcjLVUPP714WxmViE9Thht4etog==
 
+svelte-jester@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/svelte-jester/-/svelte-jester-2.0.1.tgz#5bd20e49fca81e4aa9838989f9688ab9ca111336"
+  integrity sha512-Q7EMKMMUL08G68rWIEFrA0xuF4x30cKO6yIa6d/+7s30+b0/Tw4V+Sx0P/GtfweIgi3Aa0xUw4fJESD1o2MQew==
+
 svelte-preprocess@^4.0.0, svelte-preprocess@^4.7.2:
   version "4.7.4"
   resolved "https://registry.yarnpkg.com/svelte-preprocess/-/svelte-preprocess-4.7.4.tgz#e4d5208ab25c2aaaf19e837f7d7bbf7930e61d2b"
