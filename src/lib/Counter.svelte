@@ -1,13 +1,23 @@
 <script lang="ts">
-  let count: number = 0
+  export let count: number = 0
+
   const increment = () => {
     count += 1
   }
+
+  const decrement = () => {
+    count -= 1
+  }
+
+  const reset = () => {
+    count = 0
+  }
 </script>
 
-<button on:click={increment}>
-  Clicks: {count}
-</button>
+<button on:click={increment}>+</button>
+<button on:click={decrement}>-</button>
+<h1 data-testId="counter-value" class="text-6xl">{count}</h1>
+<button on:click={reset}>Reset</button>
 
 <style>
   button {
