@@ -1,16 +1,20 @@
 <script lang="ts">
   import * as localforage from "localforage"
+  import { getContext } from "svelte"
   import * as Y from "yjs"
+  import { soundKey } from "./shared"
 
   export let label
   export let audioId
   export let playQueues: Y.Array<AudioRecord["id"]>
   export let playingAudio: Y.Array<AudioRecord["id"]>
-  export let onPlay: (audio: HTMLAudioElement) => void
 
   let audioData: string
   let audio: HTMLAudioElement
   let isPlaying: boolean = false
+
+  const { getAudioCache } = getContext(soundKey)
+  const audioCache = getAudioCache()
 
   const play = async () => {
     if (!audioData) {
@@ -25,11 +29,23 @@
       }
       playingAudio.push([audioId])
       audio.play()
-      onPlay(audio)
+      pauseOtherSounds(audio)
     } else {
       audio.pause()
       audio.currentTime = 0
     }
+  }
+
+  function pauseOtherSounds(currentAudio: HTMLAudioElement) {
+    audioCache.forEach((audio, idx) => {
+      if (audio != currentAudio) {
+        audio.pause()
+        audio.currentTime = 0
+        delete audioCache[idx]
+      }
+    })
+
+    audioCache.push(currentAudio)
   }
 
   let queueArray: number[] = []

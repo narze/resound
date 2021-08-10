@@ -6,6 +6,12 @@
   import "twind/shim"
 
   import Sound from "./lib/Sound.svelte"
+  import { setContext } from "svelte"
+  import { soundKey } from "./lib/shared"
+
+  setContext(soundKey, {
+    getAudioCache: () => audioCache,
+  })
 
   const audioCache: Array<HTMLAudioElement> = []
 
@@ -145,18 +151,6 @@
     playQueues.push([id])
   }
 
-  function onPlay(playingAudio: HTMLAudioElement) {
-    audioCache.forEach((audio, idx) => {
-      if (audio != playingAudio) {
-        audio.pause()
-        audio.currentTime = 0
-        delete audioCache[idx]
-      }
-    })
-
-    audioCache.push(playingAudio)
-  }
-
   let audioUploadIds: AudioRecord[] = []
 
   localForage.getItem("ids").then((ids) => {
@@ -198,13 +192,7 @@
       <div class="grid grid-cols-5 gap-1">
         {#each audioUploadIds as { id, name }}
           <div class="relative h-40">
-            <Sound
-              label={name}
-              audioId={id}
-              {onPlay}
-              {playQueues}
-              {playingAudio}
-            />
+            <Sound label={name} audioId={id} {playQueues} {playingAudio} />
             <button
               on:click={() => deleteAudioId(id)}
               class="absolute top-1 right-1 border">ⓧ</button

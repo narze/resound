@@ -2,6 +2,8 @@ import { render, fireEvent } from "@testing-library/svelte"
 import * as Y from "yjs"
 import * as localforage from "localforage"
 import Sound from "./Sound.svelte"
+import ContextTest from "./ContextTest.svelte"
+import { soundKey } from "./shared"
 
 jest.mock("localforage")
 
@@ -29,16 +31,19 @@ describe("when clicking the button", () => {
       } as unknown as HTMLAudioElement
     })
 
-    const onPlay = jest.fn()
-
-    const { getByText } = render(Sound, {
-      label: "Test Audio",
-      audioId: 0,
-      playQueues: Y.Array.from([]),
-      playingAudio: Y.Array.from([]),
-      onPlay: (audio: HTMLAudioElement) => {
-        console.log(audio.src)
-        onPlay()
+    const { getByText } = render(ContextTest, {
+      props: {
+        Component: Sound,
+        contextKey: soundKey,
+        contextValue: {
+          getAudioCache: () => [],
+        },
+        componentProps: {
+          label: "Test Audio",
+          audioId: 0,
+          playQueues: Y.Array.from([]),
+          playingAudio: Y.Array.from([]),
+        },
       },
     })
 
@@ -51,7 +56,6 @@ describe("when clicking the button", () => {
 
     // expect(button).toHaveClass("bg-green-400")
 
-    expect(onPlay).toHaveBeenCalled()
     expect(mockPlay).toHaveBeenCalled()
     expect(mockPause).not.toHaveBeenCalled()
   })
@@ -69,12 +73,20 @@ describe("when clicking the button", () => {
         } as unknown as HTMLAudioElement
       })
 
-      const { getByText } = render(Sound, {
-        label: "Test Audio",
-        audioId: 0,
-        playQueues: Y.Array.from([]),
-        playingAudio: Y.Array.from([]),
-        onPlay: (audio: HTMLAudioElement) => {},
+      const { getByText } = render(ContextTest, {
+        props: {
+          Component: Sound,
+          contextKey: soundKey,
+          contextValue: {
+            getAudioCache: () => [],
+          },
+          componentProps: {
+            label: "Test Audio",
+            audioId: 0,
+            playQueues: Y.Array.from([]),
+            playingAudio: Y.Array.from([]),
+          },
+        },
       })
 
       const button = getByText("Test Audio")
