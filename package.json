@@ -1,6 +1,6 @@
 {
-  "name": "remote-soundboard",
-  "version": "0.0.0",
+  "name": "resound",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -36,25 +36,5 @@
     "y-indexeddb": "^9.0.6",
     "y-webrtc": "^10.2.0",
     "yjs": "^13.5.12"
-  },
-  "jest": {
-    "transform": {
-      "^.+\\.js$": "babel-jest",
-      "^.+\\.svelte$": [
-        "svelte-jester",
-        {
-          "preprocess": true
-        }
-      ],
-      "^.+\\.ts$": "ts-jest"
-    },
-    "moduleFileExtensions": [
-      "js",
-      "ts",
-      "svelte"
-    ],
-    "setupFilesAfterEnv": [
-      "<rootDir>/jest-setup.js"
-    ]
   }
 }
