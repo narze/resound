@@ -1,5 +1,5 @@
 <script lang="ts">
-  import localForage from "localforage"
+  import * as localforage from "localforage"
   import * as Y from "yjs"
 
   export let label
@@ -14,7 +14,7 @@
 
   const play = async () => {
     if (!audioData) {
-      audioData = (await localForage.getItem(`${audioId}`)) as string
+      audioData = (await localforage.getItem(`${audioId}`)) as string
       audio = new Audio(audioData)
     }
 

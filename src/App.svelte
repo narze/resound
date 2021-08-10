@@ -6,7 +6,6 @@
   import "twind/shim"
 
   import Sound from "./lib/Sound.svelte"
-  import Counter from "./lib/Counter.svelte"
 
   const audioCache: Array<HTMLAudioElement> = []
 
