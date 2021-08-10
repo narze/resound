@@ -1,7 +1,7 @@
 import { render, fireEvent } from "@testing-library/svelte"
 import * as Y from "yjs"
-import Sound from "./Sound.svelte"
 import * as localforage from "localforage"
+import Sound from "./Sound.svelte"
 
 jest.mock("localforage")
 
@@ -11,32 +11,82 @@ mockedLocalforage.getItem.mockImplementation(async () => {
   return "data:audio/mpeg;base64//Mock"
 })
 
-jest.spyOn(window, "Audio").mockImplementation((src?: string) => {
-  return {
-    paused: true,
-    play: () => {
-      console.log("PLAY")
-    },
-  } as unknown as HTMLAudioElement
-})
-
-it("it works", async () => {
-  const onPlay = jest.fn()
-
-  const { getByText } = render(Sound, {
-    label: "Test Audio",
-    audioId: 0,
-    playQueues: Y.Array.from([]),
-    playingAudio: Y.Array.from([]),
-    onPlay: (audio: HTMLAudioElement) => {
-      console.log(audio.src)
-      onPlay()
-    },
+describe("when clicking the button", () => {
+  afterEach(() => {
+    ;(window.Audio as any).mockClear()
   })
 
-  expect(getByText("Test Audio")).toBeInTheDocument()
+  it("it creates audio and play it", async () => {
+    const mockPlay = jest.fn()
+    const mockPause = jest.fn()
 
-  await fireEvent.click(getByText("Test Audio"))
+    // TODO: Mock Audio class
+    jest.spyOn(window, "Audio").mockImplementation((src?: string) => {
+      return {
+        paused: true,
+        play: mockPlay,
+        pause: mockPause,
+      } as unknown as HTMLAudioElement
+    })
 
-  expect(onPlay).toHaveBeenCalled()
+    const onPlay = jest.fn()
+
+    const { getByText } = render(Sound, {
+      label: "Test Audio",
+      audioId: 0,
+      playQueues: Y.Array.from([]),
+      playingAudio: Y.Array.from([]),
+      onPlay: (audio: HTMLAudioElement) => {
+        console.log(audio.src)
+        onPlay()
+      },
+    })
+
+    const button = getByText("Test Audio")
+    expect(button).toBeInTheDocument()
+
+    // expect(button).toHaveClass("bg-yellow-200")
+
+    await fireEvent.click(button)
+
+    // expect(button).toHaveClass("bg-green-400")
+
+    expect(onPlay).toHaveBeenCalled()
+    expect(mockPlay).toHaveBeenCalled()
+    expect(mockPause).not.toHaveBeenCalled()
+  })
+
+  describe("when the audio is already playing", () => {
+    it("pauses the audio", async () => {
+      const mockPlay = jest.fn()
+      const mockPause = jest.fn()
+
+      jest.spyOn(window, "Audio").mockImplementation((src?: string) => {
+        return {
+          paused: false,
+          play: mockPlay,
+          pause: mockPause,
+        } as unknown as HTMLAudioElement
+      })
+
+      const { getByText } = render(Sound, {
+        label: "Test Audio",
+        audioId: 0,
+        playQueues: Y.Array.from([]),
+        playingAudio: Y.Array.from([]),
+        onPlay: (audio: HTMLAudioElement) => {},
+      })
+
+      const button = getByText("Test Audio")
+
+      // expect(button).toHaveClass("bg-green-400")
+
+      await fireEvent.click(button)
+
+      // expect(button).toHaveClass("bg-yellow-200")
+
+      expect(mockPause).toHaveBeenCalled()
+      expect(mockPlay).not.toHaveBeenCalled()
+    })
+  })
 })
