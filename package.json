@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "localforage": "^1.9.0",
+    "svelte-file-dropzone": "^0.0.15",
     "twind": "^0.16.16",
     "y-indexeddb": "^9.0.6",
     "y-webrtc": "^10.2.0",

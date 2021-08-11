@@ -4,6 +4,7 @@
   import { IndexeddbPersistence } from "y-indexeddb"
   import * as Y from "yjs"
   import "twind/shim"
+  import Dropzone from "svelte-file-dropzone"
 
   import Sound from "./lib/Sound.svelte"
   import { setContext } from "svelte"
@@ -39,10 +40,9 @@
   async function uploadAudio(e: any) {
     const input = e.target as HTMLInputElement
 
-    const readFile = (file: File) =>
-      new Promise((resolve, reject) => {
+    const readFile = (file: File) => {
+      return new Promise((resolve, reject) => {
         const name = file.name.split(".").slice(0, -1).join(".")
-        console.log({ name })
 
         if (file.type.indexOf("audio/") !== 0) {
           alert("Please upload audio file")
@@ -58,8 +58,6 @@
             ? audioRecords[audioRecords.length - 1].id + 1
             : 0
           audioRecords.push({ id, name })
-
-          console.log({ id, name })
 
           try {
             await localForage.setItem(`${id}`, audioString)
@@ -78,6 +76,7 @@
         }
         reader.readAsDataURL(file)
       })
+    }
 
     for await (const file of Object.values(input.files)) {
       await readFile(file)
@@ -163,11 +162,25 @@
   localForage.getItem("ids").then((ids) => {
     audioUploadIds = (ids as Array<AudioRecord>) || []
   })
+
+  function handleFilesSelect(e) {
+    const { acceptedFiles } = e.detail
+
+    uploadAudio({ target: { files: acceptedFiles } })
+  }
+
+  let dragEnterCounter = 0
+  $: showUploadModal = dragEnterCounter > 0
 </script>
 
-<main>
-  <!-- <Counter count={1} /> -->
-
+<main
+  on:dragenter={() => {
+    dragEnterCounter += 1
+  }}
+  on:dragleave={() => {
+    dragEnterCounter -= 1
+  }}
+>
   {#if isServer || !roomNumber}
     <h1>Resound</h1>
   {/if}
@@ -230,6 +243,50 @@
         <input type="file" id="audio" on:change={uploadAudio} multiple />
       </div>
 
+      {#if showUploadModal}
+        <div
+          id="modal"
+          class="fixed z-10 inset-0 overflow-y-auto"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+          on:drop={() => {
+            dragEnterCounter = 0
+          }}
+        >
+          <div
+            class="flex items-end justify-center min-h-screen text-center sm:block sm:p-0"
+          >
+            <div
+              class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              aria-hidden="true"
+            />
+
+            <!-- This element is to trick the browser into centering the modal contents. -->
+            <span
+              class="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true">&#8203;</span
+            >
+
+            <div
+              class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:align-middle sm:max-w-lg sm:w-full"
+            >
+              <div class="bg-white p-4">
+                <div id="dropzone" class="text-center">
+                  <Dropzone
+                    on:drop={handleFilesSelect}
+                    accept="audio/*"
+                    containerClasses="dropzone w-full h-full text-4xl flex items-center justify-center "
+                    containerStyles="height: 300px;"
+                    >Drag Audio Files Here</Dropzone
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {/if}
+
       <button on:click={clearAudio} class="border rounded p-2 bg-red-400"
         >Remove all audios</button
       >
@@ -255,6 +312,7 @@
     text-align: center;
     padding: 1em;
     margin: 0 auto;
+    height: 100vh;
   }
 
   h1 {
