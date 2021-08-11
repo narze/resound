@@ -36,45 +36,52 @@
     audioUploadIds = []
   }
 
-  function uploadAudio(e: any) {
+  async function uploadAudio(e: any) {
     const input = e.target as HTMLInputElement
-    const file = input.files[0]
-    const name = file.name.split(".").slice(0, -1).join(".")
 
-    if (file.type.indexOf("audio/") !== 0) {
-      alert("Please upload audio file")
-      return
+    const readFile = (file: File) =>
+      new Promise((resolve, reject) => {
+        const name = file.name.split(".").slice(0, -1).join(".")
+        console.log({ name })
+
+        if (file.type.indexOf("audio/") !== 0) {
+          alert("Please upload audio file")
+          return
+        }
+        const reader = new FileReader()
+        reader.onload = async function () {
+          const audioString = this.result as string
+
+          const audioRecords =
+            ((await localForage.getItem("ids")) as Array<AudioRecord>) || []
+          const id = audioRecords.length
+            ? audioRecords[audioRecords.length - 1].id + 1
+            : 0
+          audioRecords.push({ id, name })
+
+          console.log({ id, name })
+
+          try {
+            await localForage.setItem(`${id}`, audioString)
+            await localForage.setItem("ids", audioRecords)
+
+            audioUploadIds = audioRecords
+
+            // Clear all and push new audio records
+            sharedAudios.delete(0, sharedAudios.length)
+            sharedAudios.push(audioRecords)
+            input.value = ""
+            resolve(reader.result)
+          } catch (err) {
+            reject(err)
+          }
+        }
+        reader.readAsDataURL(file)
+      })
+
+    for await (const file of Object.values(input.files)) {
+      await readFile(file)
     }
-
-    const reader = new FileReader()
-
-    reader.onload = async function () {
-      const audioString = this.result as string
-
-      const audioRecords =
-        ((await localForage.getItem("ids")) as Array<AudioRecord>) || []
-      const id = audioRecords.length
-        ? audioRecords[audioRecords.length - 1].id + 1
-        : 0
-      audioRecords.push({ id, name })
-
-      try {
-        await localForage.setItem(`${id}`, audioString)
-        await localForage.setItem("ids", audioRecords)
-
-        audioUploadIds = audioRecords
-
-        // Clear all and push new audio records
-        sharedAudios.delete(0, sharedAudios.length)
-        sharedAudios.push(audioRecords)
-
-        input.value = ""
-      } catch (err) {
-        alert(err.message)
-      }
-    }
-
-    reader.readAsDataURL(file)
   }
 
   async function deleteAudioId(audioId) {
@@ -220,7 +227,7 @@
     {#if isServer}
       <div class="file-wrapper">
         <h3>Upload Audio</h3>
-        <input type="file" id="audio" on:change={uploadAudio} />
+        <input type="file" id="audio" on:change={uploadAudio} multiple />
       </div>
 
       <button on:click={clearAudio} class="border rounded p-2 bg-red-400"
